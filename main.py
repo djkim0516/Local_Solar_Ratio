@@ -22,10 +22,10 @@ parser.add_argument('--data',type=str,default='busan_incheon_hadong_solarratio_t
 parser.add_argument('--features', type=list, default=[0,1,2,3,4,5,6,7], help='feature index')   #input_size도 함께 변경
 parser.add_argument('--input_size',type=int,default=8,help='input size')
 parser.add_argument('--batch_size',type=int,default=64,help='batch size')
-parser.add_argument('--model', type=any, default=DNN2, help='model')
+parser.add_argument('--model', type=any, default=CNN1, help='model')
 parser.add_argument('--hist_len',type=int,default=24*5,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
-parser.add_argument('--hidden_size',type=int,default=256,help='hidden size')         #작으면 underfitting
+parser.add_argument('--hidden_size',type=int,default=1024,help='hidden size')         #작으면 underfitting
 parser.add_argument('--num_layers',type=int,default=2,help='nu  yers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
@@ -140,10 +140,7 @@ def test(model, test_batch, device):
     avg_loss_mape = test_loss_mape/size
     return avg_loss_mse, avg_loss_mape, result_df
 
-   
-def mape_loss(y_pred, target):
-        loss = (y_pred - target).abs() / (target.abs() + 1e-4)
-        return loss
+
 
 
 def main():
@@ -162,7 +159,7 @@ def main():
     loss_result = pd.DataFrame(index=[i for i in range(args.epochs + 6)], columns=['Busan', 'Incheon', 'Hadong']) #*각 지역별로 epoch 훈련 돌린거 + 각 지역에 대한 test loss 저장
     
     
-    for args.train_area in ['Busan', 'Incheon', 'Hadong']:
+    for args.train_area in ['Busan', 'Incheon', 'Hadong']:  #* 각 지역별로 훈련 -> 타 두지역에 TEST
         if args.train_area == 'Busan':
             train_num = 0
             test_num_1 = 1
@@ -200,6 +197,7 @@ def main():
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
             
             for epoch in range(args.epochs):
+                print(f"epoch : {epoch + 1}\n")
                 train_loss, result_train = train(model, optimizer, train_loader, backprop=args.backprop, device=args.device)
                 
                 loss_list.append(train_loss)
@@ -217,11 +215,11 @@ def main():
             avg_loss_mse, avg_loss_mape, result_test = test(model, test_loader, args.device)
             result_test.to_csv(f'{result_dir}/pred_result_train_{args.train_area}_testarea_{test_num}.csv')
             loss_result.iloc[epoch + test_num + 1, train_num] = avg_loss_mse
-            loss_result.iloc[epoch + test_num + 4, train_num] = avg_loss_mape
+            loss_result.iloc[epoch + test_num + 4, train_num] = float(avg_loss_mape)
             test_num+=1
         
             print(f"avg_loss_mse : {avg_loss_mse}")
-            print(f"avg_loss_mape : {avg_loss_mape}")
+            print(f"avg_loss_mape : {float(avg_loss_mape)}")
         
     loss_result.to_csv(f'{result_dir}/loss_result.csv')
     

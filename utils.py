@@ -72,3 +72,8 @@ def convert_2d(t):
     hour_sin = np.sin(hour * 2 * np.pi / 24)
     
     return date_cos, date_sin, hour_cos, hour_sin
+
+
+def mape_loss(y_pred, target):
+        loss = (y_pred - target).abs() / (target.abs() + 1e-4)
+        return loss
