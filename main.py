@@ -23,9 +23,9 @@ parser.add_argument('--features', type=list, default=[0,1,2,3,4,5,6,7], help='fe
 parser.add_argument('--input_size',type=int,default=8,help='input size')
 parser.add_argument('--batch_size',type=int,default=64,help='batch size')
 parser.add_argument('--model', type=any, default=CNN1, help='model')
-parser.add_argument('--hist_len',type=int,default=24*5,help='hist len')
+parser.add_argument('--hist_len',type=int,default=24*7,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
-parser.add_argument('--hidden_size',type=int,default=1024,help='hidden size')         #작으면 underfitting
+parser.add_argument('--hidden_size',type=int,default=256,help='hidden size')         #작으면 underfitting
 parser.add_argument('--num_layers',type=int,default=2,help='nu  yers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')

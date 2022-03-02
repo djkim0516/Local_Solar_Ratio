@@ -198,7 +198,7 @@ class CNN1(nn.Module):
         self.conv1 = nn.Conv1d(input_size, hidden_size, kernel_size=24, bias=True)    #in_channel, out_channel, 24시간을 봄
         self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=8, bias=True)
         self.conv3 = nn.Conv1d(hidden_size, 8, kernel_size=8, bias=True)     
-        self.fc1 = nn.Linear(8*83, 128, bias=True)      #!!!! 공식으로 변경하기
+        self.fc1 = nn.Linear(8*131, 128, bias=True)      #!!!! 공식으로 변경하기
         self.fc2 = nn.Linear(128, pred_len, bias=True)
         self.dropout = nn.Dropout()
         self.relu = nn.ReLU()
