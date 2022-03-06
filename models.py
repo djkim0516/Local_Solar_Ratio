@@ -217,20 +217,6 @@ class CNN1(nn.Module):
         # out = self.relu(self.fc2(out))
         out = self.fc2(out)
         
-        # out = self.conv1(x)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv1(x))
-        # out = self.conv2(out)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv2(out))
-        # out = self.conv3(out)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv3(out))
-        # # out = out.view(16, -1)              #!!!!
-        # out = self.relu(self.fc1(out.view(16, -1)))
-        # # out = self.relu(self.fc2(out))
-        # out = self.fc2(out)
-        
         return out
 
 
