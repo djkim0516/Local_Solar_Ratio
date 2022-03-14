@@ -25,11 +25,11 @@ parser.add_argument('--batch_size',type=int,default=64,help='batch size')
 parser.add_argument('--model', type=any, default=CNN1, help='model')
 parser.add_argument('--hist_len',type=int,default=24*7,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
-parser.add_argument('--hidden_size',type=int,default=256,help='hidden size')         #작으면 underfitting
+parser.add_argument('--hidden_size',type=int,default=64,help='hidden size')         #작으면 underfitting
 parser.add_argument('--num_layers',type=int,default=2,help='nu  yers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
-parser.add_argument('--epochs',type=int,default=10,help='epochs')
+parser.add_argument('--epochs',type=int,default=200,help='epochs')
 parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
@@ -141,6 +141,8 @@ def test(model, test_batch, device):
         test_loss_mae += F.l1_loss(out.float(), y.float()).item()##
         # del loss_mse, loss_mape
     size = len(test_batch.dataset)
+    print(len(test_batch))
+    print(size)
     avg_loss_mse = test_loss_mse/size
     avg_loss_mape = test_loss_mape/size
     avg_loss_mae = test_loss_mae/size
@@ -227,6 +229,7 @@ def main():
         
             print(f"avg_loss_mse : {avg_loss_mse}")
             print(f"avg_loss_mape : {float(avg_loss_mape)}")
+            print(f"avg_loss_mae : {float(avg_loss_mae)}")
         
     loss_result.to_csv(f'{result_dir}/loss_result.csv')
     
