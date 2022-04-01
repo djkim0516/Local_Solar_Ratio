@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import pandas as pd
-from pytorch_forecasting.metrics import MAPE
+# from pytorch_forecasting.metrics import MAPE
 import gc
 
 parser = argparse.ArgumentParser()
@@ -25,15 +25,16 @@ parser.add_argument('--batch_size',type=int,default=64,help='batch size')
 parser.add_argument('--model', type=any, default=CNN1, help='model')
 parser.add_argument('--hist_len',type=int,default=24*7,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
-parser.add_argument('--hidden_size',type=int,default=256,help='hidden size')         #작으면 underfitting
+parser.add_argument('--hidden_size',type=int,default=64,help='hidden size')         #작으면 underfitting
 parser.add_argument('--num_layers',type=int,default=2,help='nu  yers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
-parser.add_argument('--epochs',type=int,default=20,help='epochs')
-parser.add_argument('--year_term',type=int,default=[2014010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
+parser.add_argument('--epochs',type=int,default=200,help='epochs')
+parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
+parser.add_argument('--fine_tuning_term',type=int,default=[2017010101,2019010101], help='start year ~ end year')
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
-parser.add_argument('--metrics', type=str, default='l2', help='metrics')
+# parser.add_argument('--metrics', type=str, default='l2', help='metrics')
 # parser.add_argument('--test_area', type=str,default='Hadong', help='Test Area')
 
 args = parser.parse_args()
@@ -101,6 +102,8 @@ def train(model, optimizer, train_batch, backprop, device):
         optimizer.zero_grad()
         out = model(x)
         loss = F.mse_loss(out.float(), y.float())
+        # print(loss)
+        # loss = F.l1_loss(out.float(), y.float())    #l1 loss
         result_df.to_numpy()[result_idx:result_idx+args.batch_size, :] = np.vstack((out[:,0].cpu().detach().numpy(),y[:,0].cpu().detach().numpy())).T
         result_idx+=args.batch_size
         if backprop:
@@ -122,6 +125,7 @@ def test(model, test_batch, device):
     # mape = MAPE()#
     test_loss_mse = 0.0
     test_loss_mape = 0.0
+    test_loss_mae = 0.0
     for idx, data in enumerate(test_batch):
         gc.collect()
         torch.cuda.empty_cache()
@@ -133,12 +137,17 @@ def test(model, test_batch, device):
         result_idx+=args.batch_size
         test_loss_mse += loss_mse.item()
         # print(torch.mean(mape_loss(y_pred = out.cpu().detach().float(), target = y.cpu().detach().float()), axis=0))
-        test_loss_mape += torch.mean(mape_loss(y_pred = out.cpu().detach().float(), target = y.cpu().detach().float()), axis=0)##
+        # print(mape_loss(y_pred = out.cpu().detach().float(), target = y.cpu().detach().float()))
+        test_loss_mape += torch.sum(mape_loss(y_pred = out.cpu().detach().float(), target = y.cpu().detach().float()), axis=0)##
+        test_loss_mae += F.l1_loss(out.float(), y.float()).item()##
         # del loss_mse, loss_mape
     size = len(test_batch.dataset)
+    print(len(test_batch))
+    print(size)
     avg_loss_mse = test_loss_mse/size
     avg_loss_mape = test_loss_mape/size
-    return avg_loss_mse, avg_loss_mape, result_df
+    avg_loss_mae = test_loss_mae/size
+    return avg_loss_mse, avg_loss_mape, avg_loss_mae, result_df
 
 
 
@@ -156,7 +165,7 @@ def main():
     result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
     print(f"Directory Created")
 
-    loss_result = pd.DataFrame(index=[i for i in range(args.epochs + 6)], columns=['Busan', 'Incheon', 'Hadong']) #*각 지역별로 epoch 훈련 돌린거 + 각 지역에 대한 test loss 저장
+    loss_result = pd.DataFrame(index=[i for i in range(args.epochs + 9)], columns=['Busan', 'Incheon', 'Hadong']) #*각 지역별로 epoch 훈련 돌린거 + 각 지역에 대한 test loss 저장
     
     
     for args.train_area in ['Busan', 'Incheon', 'Hadong']:  #* 각 지역별로 훈련 -> 타 두지역에 TEST
@@ -212,14 +221,16 @@ def main():
         for test_dataset in [test_dataset_1, test_dataset_2]:   #여기서 예측
             print(f"\nTest Area\n")
             test_loader = DataLoader(test_dataset, batch_size=args.batch_size, drop_last=True)
-            avg_loss_mse, avg_loss_mape, result_test = test(model, test_loader, args.device)
+            avg_loss_mse, avg_loss_mape, avg_loss_mae, result_test = test(model, test_loader, args.device)
             result_test.to_csv(f'{result_dir}/pred_result_train_{args.train_area}_testarea_{test_num}.csv')
             loss_result.iloc[epoch + test_num + 1, train_num] = avg_loss_mse
             loss_result.iloc[epoch + test_num + 4, train_num] = float(avg_loss_mape)
+            loss_result.iloc[epoch + test_num + 7, train_num] = float(avg_loss_mae)
             test_num+=1
         
             print(f"avg_loss_mse : {avg_loss_mse}")
             print(f"avg_loss_mape : {float(avg_loss_mape)}")
+            print(f"avg_loss_mae : {float(avg_loss_mae)}")
         
     loss_result.to_csv(f'{result_dir}/loss_result.csv')
     

@@ -200,7 +200,7 @@ class CNN1(nn.Module):
         self.conv3 = nn.Conv1d(hidden_size, 8, kernel_size=8, bias=True)     
         self.fc1 = nn.Linear(8*131, 128, bias=True)      #!!!! 공식으로 변경하기
         self.fc2 = nn.Linear(128, pred_len, bias=True)
-        self.dropout = nn.Dropout()
+        self.dropout = nn.Dropout(p=0.2)
         self.relu = nn.ReLU()
         
     
@@ -210,26 +210,15 @@ class CNN1(nn.Module):
         x = x.type(torch.cuda.FloatTensor).clone().detach().requires_grad_(True)          #! 여기서 메모리 누수 발생하는듯
         # x = torch.tensor(x, dtype = torch.float32)
         out = self.relu(self.conv1(x))
+        out = self.dropout(out)
         out = self.relu(self.conv2(out))
+        out = self.dropout(out)
         out = self.relu(self.conv3(out))
+        out = self.dropout(out)
         # out = out.view(16, -1)              #!!!!
         out = self.relu(self.fc1(out.view(x.shape[0], -1)))
         # out = self.relu(self.fc2(out))
         out = self.fc2(out)
-        
-        # out = self.conv1(x)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv1(x))
-        # out = self.conv2(out)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv2(out))
-        # out = self.conv3(out)
-        # out = self.relu(out)
-        # # out = self.relu(self.conv3(out))
-        # # out = out.view(16, -1)              #!!!!
-        # out = self.relu(self.fc1(out.view(16, -1)))
-        # # out = self.relu(self.fc2(out))
-        # out = self.fc2(out)
         
         return out
 

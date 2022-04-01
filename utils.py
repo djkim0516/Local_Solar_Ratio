@@ -6,8 +6,11 @@ import arrow
 
 proj_dir = os.getcwd()
 conf_fp = os.path.join(proj_dir, 'config.yaml')
+conf_original = os.path.join(proj_dir, 'config copy.yaml')
 with open(conf_fp, encoding='UTF8') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
+with open(conf_original, encoding='UTF8') as f:
+    config_copy = yaml.load(f, Loader=yaml.FullLoader)
 
 
 # ffill along axis 1, as provided in the answer by Divakar
@@ -75,5 +78,6 @@ def convert_2d(t):
 
 
 def mape_loss(y_pred, target):
-        loss = (y_pred - target).abs() / (target.abs() + 1e-4)
-        return loss
+    # print((y_pred - target).abs())
+    loss = (y_pred - target).abs() / (target.abs() + 1e-4)
+    return loss

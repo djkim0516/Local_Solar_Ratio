@@ -49,7 +49,7 @@ args.input_size = len(args.features)
 
 
 #* main으로 넣어서 모두 가능하게 하기!
-if args.train_area == 'Busan':
+'''if args.train_area == 'Busan':
     train_num = 0
     test_num_1 = 1
     test_num_2 = 2
@@ -62,8 +62,26 @@ elif args.train_area == 'Hadong':
     test_num_1 = 0
     test_num_2 = 1
 else:
-    NotImplementedError('Train Area not specified')
+    NotImplementedError('Train Area not specified')'''
     
+
+location_list = config['experiments']['location_used'].copy()
+feature_list = config['experiments']['features_used'].copy()
+
+print(location_list)
+print(feature_list)
+
+for train_location in config['experiments']['location_used']:
+    location_list = config['experiments']['location_used'].copy()
+    location_list.remove(train_location)
+    test_location_0 = location_list[0]
+    test_location_1 = location_list[1]
+    test_location_2 = location_list[2]
+    test_location_3 = location_list[3]
+    test_location_4 = location_list[4]
+    test_location_5 = location_list[5]
+    print(train_location, test_location_0, test_location_1, test_location_2, test_location_3, test_location_4, test_location_5)
+
 #dataset 받아오기
 ##메모리 부족 문제 가능성, 발생시 변수 선언 순서 변경
 # train_dataset_0 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
@@ -71,7 +89,7 @@ else:
 # test_dataset_1 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, scaler=scaler)
 # test_dataset_2 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, scaler=scaler)
 # args.model = MultiChannelLSTM_DifferentTimeScale
-if args.model == MultiChannelLSTM_DifferentTimeScale:
+'''if args.model == MultiChannelLSTM_DifferentTimeScale:
     train_dataset_00 = KORDataset(seq_len=6+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
     train_dataset_01 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
     scaler = train_dataset_00.scaler
@@ -85,7 +103,10 @@ else:
     test_dataset_1 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, norm=args.norm)
     test_scaler_1 = test_dataset_1.scaler
     test_dataset_2 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, norm=args.norm)
-    test_scaler_2 = test_dataset_2.scaler
+    test_scaler_2 = test_dataset_2.scaler'''
+    
+    
+
 
 
 def train(model, optimizer, train_batch, backprop, device):
@@ -146,13 +167,13 @@ def main():
     print(start_time)
     
     
-    try:
-        os.mkdir(os.getcwd() + f"/result")
-    except:
-        pass
-    os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
-    result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
-    print(f"Directory Created")
+    # try:
+    #     os.mkdir(os.getcwd() + f"/result")
+    # except:
+    #     pass
+    # os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
+    # result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
+    # print(f"Directory Created")
 
     
     device = torch.device(args.device)
