@@ -49,20 +49,7 @@ args.input_size = len(args.features)
 
 
 #* main으로 넣어서 모두 가능하게 하기!
-'''if args.train_area == 'Busan':
-    train_num = 0
-    test_num_1 = 1
-    test_num_2 = 2
-elif args.train_area == 'Incheon':
-    train_num = 1
-    test_num_1 = 0
-    test_num_2 = 2
-elif args.train_area == 'Hadong':
-    train_num = 2
-    test_num_1 = 0
-    test_num_2 = 1
-else:
-    NotImplementedError('Train Area not specified')'''
+
     
 
 location_list = config['experiments']['location_used'].copy()
@@ -105,8 +92,20 @@ else:
     test_dataset_2 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, norm=args.norm)
     test_scaler_2 = test_dataset_2.scaler'''
     
-    
+train_dataset  = pd.read_csv(f'./dataset/solar_weather_2017_2020_{train_location}.csv', encoding='cp949', index_col=0)
+test_dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_0}.csv', encoding='cp949', index_col=0)
+test_dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_1}.csv', encoding='cp949', index_col=0)
+test_dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_2}.csv', encoding='cp949', index_col=0)
+test_dataset_3 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_3}.csv', encoding='cp949', index_col=0)
+test_dataset_4 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_4}.csv', encoding='cp949', index_col=0)
+test_dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_5}.csv', encoding='cp949', index_col=0)
 
+train_dataset = KORCSVDataset(data=train_dataset, locals=None, seq_len=128, norm='MinMax')
+print(train_dataset[1])
+
+#! 여기까지는 얼추 완료
+#! 여기까지는 얼추 완료
+#! 여기까지는 얼추 완료
 
 
 def train(model, optimizer, train_batch, backprop, device):

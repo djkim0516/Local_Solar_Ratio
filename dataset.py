@@ -100,35 +100,36 @@ class KORDataset(Dataset):
 
 class KORCSVDataset(Dataset):
     
-    def __init__(self, seq_len, locals=[0], features=[0,1,2,3,4,5,6,7], year=[2017010101,2021010101], norm='Standard', data_path='./dataset/', **kwargs):
+    def __init__(self, data, locals, seq_len,
+                 features=['발전률', '기온(°C)', '강수량(mm)', '풍속(m__s)', '습도(%)', '증기압(hPa)',
+                '현지기압(hPa)', '일조(hr)', '지면온도(°C)', 'SO2', 'CO', 'O3', 'NO2', 'PM10','PM25'],
+                  year=[2017010101,2021010101], norm='Standard', **kwargs):
         # super(KORDataset, self).__init__()
         
         self.locals = locals
         self.features = features
-        self.data_path = data_path
+        # self.data_path = data_path
+        self.data = data        #Dataframe 받음
+        self.feature_idx = [self.data.columns.to_list().index(idx) for idx in self.features]
+        self.data = self.data.iloc[:, self.feature_idx]
         self.seq_len = seq_len
-        self.norm = norm 
-        # self.hour_start = (year[0] - 2013) * 24 * 365
-        # self.hour_end = (year[1] - 2013 + 1) * 24 * 365
+        self.norm = norm
+        print(year[0])
         self.hour_start = self._get_idx(year[0])
         self.hour_end = self._get_idx(year[1])
-        
-        self.data = pd.read_csv(self.data_path)
-        self.data = self.data[self.locals][:,self.hour_start:self.hour_end, self.features].astype('float32')
-        self.data[:,:,2] = np.nan_to_num(self.data[:,:,2], nan=0.0)     #강수량 nan -> 0
-        self.data = np.nan_to_num(self.data.astype(float), nan=0.0)     #test************
-        self.data = torch.from_numpy(self.data)
-
-        if len(kwargs) == 0:
+        self.scaler = self.norm_scaler(self.data, norm)     #self.data 업데이트하고, scaler 반환
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+        '''
+        if len(kwargs) == 0:ww
             self.scaler = self.norm_scaler(self.data, norm)     #scaler initialize
         else:
             for key, value in kwargs.items():
                 if key == 'scaler':
                     scaler = value
                     self.data = np.expand_dims(scaler.transform(np.squeeze(self.data, axis=0)), axis=0)       #data normalize
-            
+        '''
         
-    def _get_idx(t):
+    def _get_idx(self, t):
         t0=arrow.get("2017010101", 'YYYYMMDDHH', tzinfo='Asia/Seoul')   #varies by file
         t=arrow.get(str(t), 'YYYYMMDDHH', tzinfo='Asia/Seoul')
         return int((t.timestamp() - t0.timestamp()) / (60 * 60))    #Return Hourly Data Index
@@ -141,17 +142,14 @@ class KORCSVDataset(Dataset):
         elif norm == 'MinMax':
             scaler = MinMaxScaler()
         # print(data.shape)
-        self.data = np.expand_dims(scaler.fit_transform(np.squeeze(data, axis=0)), axis=0)
-        # self.data = scaler.transform(data)
+        # self.data = np.expand_dims(scaler.fit_transform(np.squeeze(data, axis=0)), axis=0)
+        transform = data.copy()
+        scaler.fit(data)
+        self.data[:] = scaler.transform(data)
         return scaler
         
     def __len__(self):
-        
-        # print(self.data.shape)
-        # if len(self.locals) == 1:
-        #     return self.data.shape[1] - (self.seq_len - 1)
-        # else :
-        return self.data.shape[1] - (self.seq_len - 1)
+        return len(self.data)
 
     # def __getitem__(self, local_index, hour_index):
     #     if isinstance(local_index, slice):
@@ -160,6 +158,9 @@ class KORCSVDataset(Dataset):
     #         return super().__getitem__(local_index, hour_index)
     
     def __getitem__(self, index):
+        
+        return self.data.iloc[index: index + self.seq_len]
+        
         # print(index)
         if len(self.locals) == 1:
             hour_index = index
