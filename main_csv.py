@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import pandas as pd
-from pytorch_forecasting.metrics import MAPE
+# from pytorch_forecasting.metrics import MAPE
 import gc
 
 parser = argparse.ArgumentParser()
@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--device',type=str,default='cuda:0' if torch.cuda.is_available() else 'cpu', help='cuda')
 parser.add_argument('--data',type=str,default='busan_incheon_hadong_solarratio_temp_pre_pm_time2d_2013_2020.npy',help='data path')
 parser.add_argument('--features', type=list, default=[0,1,2,3,4,5,6,7], help='feature index')   #input_size도 함께 변경
-parser.add_argument('--input_size',type=int,default=8,help='input size')
+parser.add_argument('--input_size',type=int,default=15,help='input size')
 parser.add_argument('--batch_size',type=int,default=32,help='batch size')
 parser.add_argument('--model', type=any, default=CNN1, help='model')
 parser.add_argument('--hist_len',type=int,default=24*7,help='hist len')
@@ -38,7 +38,7 @@ parser.add_argument('--metrics', type=str, default='l2', help='metrics')
 
 args = parser.parse_args()
 
-args.input_size = len(args.features)
+# args.input_size = len(args.features)
 # total_data = load_data(args.data)
 
 
@@ -52,56 +52,7 @@ args.input_size = len(args.features)
 
     
 
-location_list = config['experiments']['location_used'].copy()
-feature_list = config['experiments']['features_used'].copy()
 
-print(location_list)
-print(feature_list)
-
-for train_location in config['experiments']['location_used']:
-    location_list = config['experiments']['location_used'].copy()
-    location_list.remove(train_location)
-    test_location_0 = location_list[0]
-    test_location_1 = location_list[1]
-    test_location_2 = location_list[2]
-    test_location_3 = location_list[3]
-    test_location_4 = location_list[4]
-    test_location_5 = location_list[5]
-    print(train_location, test_location_0, test_location_1, test_location_2, test_location_3, test_location_4, test_location_5)
-
-#dataset 받아오기
-##메모리 부족 문제 가능성, 발생시 변수 선언 순서 변경
-# train_dataset_0 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
-# scaler = train_dataset_0.scaler
-# test_dataset_1 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, scaler=scaler)
-# test_dataset_2 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, scaler=scaler)
-# args.model = MultiChannelLSTM_DifferentTimeScale
-'''if args.model == MultiChannelLSTM_DifferentTimeScale:
-    train_dataset_00 = KORDataset(seq_len=6+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
-    train_dataset_01 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
-    scaler = train_dataset_00.scaler
-    test_dataset_10 = KORDataset(seq_len=6+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, scaler=scaler)
-    test_dataset_11 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, scaler=scaler)
-    test_dataset_20 = KORDataset(seq_len=6+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, scaler=scaler)
-    test_dataset_21 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, scaler=scaler)
-else:
-    train_dataset_0 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[train_num], features=args.features, year=args.year_term, norm=args.norm)
-    train_scaler = train_dataset_0.scaler
-    test_dataset_1 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_1], features=args.features, year=args.year_term, norm=args.norm)
-    test_scaler_1 = test_dataset_1.scaler
-    test_dataset_2 = KORDataset(seq_len=args.hist_len+args.pred_len, locals=[test_num_2], features=args.features, year=args.year_term, norm=args.norm)
-    test_scaler_2 = test_dataset_2.scaler'''
-    
-train_dataset  = pd.read_csv(f'./dataset/solar_weather_2017_2020_{train_location}.csv', encoding='cp949', index_col=0)
-test_dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_0}.csv', encoding='cp949', index_col=0)
-test_dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_1}.csv', encoding='cp949', index_col=0)
-test_dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_2}.csv', encoding='cp949', index_col=0)
-test_dataset_3 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_3}.csv', encoding='cp949', index_col=0)
-test_dataset_4 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_4}.csv', encoding='cp949', index_col=0)
-test_dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_5}.csv', encoding='cp949', index_col=0)
-
-train_dataset = KORCSVDataset(data=train_dataset, locals=None, seq_len=128, norm='MinMax')
-print(train_dataset[1])
 
 #! 여기까지는 얼추 완료
 #! 여기까지는 얼추 완료
@@ -166,25 +117,62 @@ def main():
     print(start_time)
     
     
-    # try:
-    #     os.mkdir(os.getcwd() + f"/result")
-    # except:
-    #     pass
-    # os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
-    # result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
-    # print(f"Directory Created")
+    try:
+        os.mkdir(os.getcwd() + f"/result")
+    except:
+        pass
+    os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
+    result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
+    print(f"Directory Created")
 
     
     device = torch.device(args.device)
     
-    for train_dataset in [train_dataset_0]:     #여기서 학습
-        print(f"\nTrain Area : {args.train_area}\n")
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, drop_last=True)
+    
+    location_list = config['experiments']['location_used'].copy()
+    feature_list = config['experiments']['features_used'].copy()
 
-        model = args.model(hist_len=args.hist_len, pred_len=args.pred_len, input_size=args.input_size, hidden_size=args.hidden_size, num_layers=args.num_layers, device=args.device).to(args.device)
+    print(location_list)
+    print(feature_list)
+
+    for train_location in config['experiments']['location_used']:
+        location_list = config['experiments']['location_used'].copy()
+        location_list.remove(train_location)
+        test_location_0 = location_list[0]
+        test_location_1 = location_list[1]
+        test_location_2 = location_list[2]
+        test_location_3 = location_list[3]
+        test_location_4 = location_list[4]
+        test_location_5 = location_list[5]
+        print(f"\nTrain Area : {train_location}\n")
+        #   , test_location_0, test_location_1, test_location_2, test_location_3, test_location_4, test_location_5)
         
+        train_dataset  = pd.read_csv(f'./dataset/solar_weather_2017_2020_{train_location}.csv', encoding='cp949', index_col=0)
+        test_dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_0}.csv', encoding='cp949', index_col=0)
+        test_dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_1}.csv', encoding='cp949', index_col=0)
+        test_dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_2}.csv', encoding='cp949', index_col=0)
+        test_dataset_3 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_3}.csv', encoding='cp949', index_col=0)
+        test_dataset_4 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_4}.csv', encoding='cp949', index_col=0)
+        test_dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_5}.csv', encoding='cp949', index_col=0)
+
+        train_dataset = KORCSVDataset(data=train_dataset, locals=None, seq_len=args.hist_len+args.pred_len, norm='MinMax')
+        # test_dataset_0 = KORCSVDataset(data=test_dataset_0, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_1 = KORCSVDataset(data=test_dataset_1, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_2 = KORCSVDataset(data=test_dataset_2, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_3 = KORCSVDataset(data=test_dataset_3, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_4 = KORCSVDataset(data=test_dataset_4, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_5 = KORCSVDataset(data=test_dataset_5, locals=None, seq_len=args.seq_len, norm='MinMax')
+
+        print(train_dataset)
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, drop_last=True)
+        for idx, data in enumerate(train_loader):
+            print(idx, data)
+            print(data.shape)
+            break
+        model = args.model(hist_len=args.hist_len, pred_len=args.pred_len, input_size=args.input_size, hidden_size=args.hidden_size, num_layers=args.num_layers, device=args.device, args=args).to(args.device)
         loss_list = []
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        print(args.device)
         
         for epoch in range(args.epochs):
             train_loss, result_train = train(model, optimizer, train_loader, backprop=args.backprop, device=args.device)
@@ -192,19 +180,50 @@ def main():
             loss_list.append(train_loss)
         plt.plot(loss_list)
         plt.show()
-        plt.savefig(f"{result_dir}/_train_loss.png")
+        plt.savefig(f"{result_dir}/train_loss.png")
         result_train.to_csv(f'{result_dir}/pred_result.csv')
+
+        for test_location in [test_location_0, test_location_1, test_location_2, test_location_3, test_location_4, test_location_5]:
+            print(f"\nTest Area == {test_location}\n")
+            test_loader = DataLoader(test_dataset, batch_size=args.batch_size, drop_last=True)
+            avg_loss_mse, avg_loss_mape, result_test = test(model, test_loader, args.device)
+            result_test.to_csv(f'{result_dir}/pred_result_{test_num}.csv')
+            
+            print("\n")
     
-    test_num = 1
-    for test_dataset in [test_dataset_1, test_dataset_2]:   #여기서 예측
-        print(f"\nTest Area\n")
-        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, drop_last=True)
-        avg_loss_mse, avg_loss_mape, result_test = test(model, test_loader, args.device)
-        result_test.to_csv(f'{result_dir}/pred_result_{test_num}.csv')
-        test_num+=1
+    
+    
+    
+    
+    
+    # for train_dataset in [train_dataset_0]:     #여기서 학습
+    #     print(f"\nTrain Area : {args.train_area}\n")
+    #     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, drop_last=True)
+
+    #     model = args.model(hist_len=args.hist_len, pred_len=args.pred_len, input_size=args.input_size, hidden_size=args.hidden_size, num_layers=args.num_layers, device=args.device).to(args.device)
         
-        print(f"avg_loss_mse : {avg_loss_mse}")
-        print(f"avg_loss_mape : {avg_loss_mape}")
+    #     loss_list = []
+    #     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        
+    #     for epoch in range(args.epochs):
+    #         train_loss, result_train = train(model, optimizer, train_loader, backprop=args.backprop, device=args.device)
+            
+    #         loss_list.append(train_loss)
+    #     plt.plot(loss_list)
+    #     plt.show()
+    #     plt.savefig(f"{result_dir}/_train_loss.png")
+    #     result_train.to_csv(f'{result_dir}/pred_result.csv')
+    
+    # test_num = 1
+    # for test_dataset in [test_dataset_1, test_dataset_2]:   #여기서 예측
+    #     print(f"\nTest Area\n")
+    #     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, drop_last=True)
+    #     avg_loss_mse, avg_loss_mape, result_test = test(model, test_loader, args.device)
+    #     result_test.to_csv(f'{result_dir}/pred_result_{test_num}.csv')
+    #     test_num+=1
+        
+    #     print(f"avg_loss_mse : {avg_loss_mse}")
+    #     print(f"avg_loss_mape : {avg_loss_mape}")
         
     
 if __name__ == '__main__':

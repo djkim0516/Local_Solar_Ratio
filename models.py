@@ -192,23 +192,29 @@ class DNN2(nn.Module):
 
 class CNN1(nn.Module):
     
-    def __init__(self, hist_len, pred_len, input_size, hidden_size, num_layers, device):
+    def __init__(self, hist_len, pred_len, input_size, hidden_size, num_layers, device, args):
         super(CNN1, self).__init__()
         # self.conv1 = nn.Conv2d(8, 128, kernel_size=7, bias=True)    #in_channel, out_channel, 
         self.conv1 = nn.Conv1d(input_size, hidden_size, kernel_size=24, bias=True)    #in_channel, out_channel, 24시간을 봄
-        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=8, bias=True)
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=args.input_size, bias=True)
         self.conv3 = nn.Conv1d(hidden_size, 8, kernel_size=8, bias=True)     
-        self.fc1 = nn.Linear(8*131, 128, bias=True)      #!!!! 공식으로 변경하기
+        self.fc1 = nn.Linear(8*124, 128, bias=True)      #!!!! 공식으로 변경하기
         self.fc2 = nn.Linear(128, pred_len, bias=True)
         self.dropout = nn.Dropout(p=0.2)
         self.relu = nn.ReLU()
+        self.device = device
         
     
     def forward(self, x):
         # # x = x.view(-1, 8, 168)              #!!!!
         x = x.transpose(1,2)
-        x = x.type(torch.cuda.FloatTensor).clone().detach().requires_grad_(True)          #! 여기서 메모리 누수 발생하는듯
-        # x = torch.tensor(x, dtype = torch.float32)
+        if self.device == 'cuda:0':
+            x = x.type(torch.cuda.FloatTensor).clone().detach().requires_grad_(True)          #! 여기서 메모리 누수 발생하는듯
+        else:
+            x = x.requires_grad_(True)
+            x = torch.tensor(x, dtype = torch.float32)
+            
+        print(x.shape)
         out = self.relu(self.conv1(x))
         out = self.dropout(out)
         out = self.relu(self.conv2(out))
@@ -216,6 +222,7 @@ class CNN1(nn.Module):
         out = self.relu(self.conv3(out))
         out = self.dropout(out)
         # out = out.view(16, -1)              #!!!!
+        print(out.shape)
         out = self.relu(self.fc1(out.view(x.shape[0], -1)))
         # out = self.relu(self.fc2(out))
         out = self.fc2(out)

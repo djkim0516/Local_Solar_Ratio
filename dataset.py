@@ -4,7 +4,6 @@ import pandas as pd
 from utils import *
 import torch
 from torch.utils.data import Dataset
-from pytorch_forecasting.data.timeseries import TimeSeriesDataSet
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 class KORDataset(Dataset):
@@ -118,7 +117,8 @@ class KORCSVDataset(Dataset):
         self.hour_start = self._get_idx(year[0])
         self.hour_end = self._get_idx(year[1])
         self.scaler = self.norm_scaler(self.data, norm)     #self.data 업데이트하고, scaler 반환
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+        self.data = torch.tensor(self.data.values)
+
         '''
         if len(kwargs) == 0:ww
             self.scaler = self.norm_scaler(self.data, norm)     #scaler initialize
@@ -159,7 +159,7 @@ class KORCSVDataset(Dataset):
     
     def __getitem__(self, index):
         
-        return self.data.iloc[index: index + self.seq_len]
+        return self.data[index: index + self.seq_len]
         
         # print(index)
         if len(self.locals) == 1:
