@@ -108,19 +108,20 @@ class KORCSVDataset(Dataset):
         self.locals = locals
         self.features = features
         # self.data_path = data_path
-        self.data = data        #Dataframe 받음
+        self.seq_len = seq_len
+        self.hour_start = self._get_idx(year[0])
+        self.hour_end = self._get_idx(year[1])//2 #- (35064-34557)
+        self.data = data[self.hour_start:self.hour_end]        #Dataframe 받음
         self.feature_idx = [self.data.columns.to_list().index(idx) for idx in self.features]
         self.data = self.data.iloc[:, self.feature_idx]
-        self.seq_len = seq_len
+        print(self.data.idx)
         self.norm = norm
         print(year[0])
-        self.hour_start = self._get_idx(year[0])
-        self.hour_end = self._get_idx(year[1])
         self.scaler = self.norm_scaler(self.data, norm)     #self.data 업데이트하고, scaler 반환
         self.data = torch.tensor(self.data.values)
 
         '''
-        if len(kwargs) == 0:ww
+        if len(kwargs) == 0:
             self.scaler = self.norm_scaler(self.data, norm)     #scaler initialize
         else:
             for key, value in kwargs.items():
@@ -159,8 +160,9 @@ class KORCSVDataset(Dataset):
     
     def __getitem__(self, index):
         
-        return self.data[index: index + self.seq_len]
-        
+        result = self.data[index: index + self.seq_len]
+        return result
+        '''
         # print(index)
         if len(self.locals) == 1:
             hour_index = index
@@ -172,4 +174,4 @@ class KORCSVDataset(Dataset):
                 return self.data[[i for i in range(*local_index.indices(local_index.stop))], hour_index:hour_index + self.seq_len, :]
             else:
                 return self.data[local_index, hour_index:hour_index + self.seq_len, :].float()
-    
+        '''

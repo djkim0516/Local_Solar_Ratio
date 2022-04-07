@@ -30,7 +30,7 @@ parser.add_argument('--num_layers',type=int,default=8,help='num layers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
 parser.add_argument('--epochs',type=int,default=2,help='epochs')
-parser.add_argument('--year_term',type=int,default=[2014010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
+parser.add_argument('--year_term',type=int,default=[2017010101,2020122509], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
 parser.add_argument('--metrics', type=str, default='l2', help='metrics')
@@ -66,8 +66,12 @@ def train(model, optimizer, train_batch, backprop, device):
     index_range = [r for r in arrow.Arrow.range('hour', arrow.get(str(args.year_term[0]), 'YYYYMMDDHH', tzinfo='Asia/Seoul'), arrow.get(str(args.year_term[1]), 'YYYYMMDDHH', tzinfo='Asia/Seoul'))]
     result_df = pd.DataFrame(columns=['model_prediction', 'real_value'], index=index_range)
     result_idx = args.hist_len
+    cnt = 0
     for idx, data in enumerate(train_batch):
+        print(cnt, ' ', end='')
+        print(data.size())
         x, y = data[:, :args.hist_len, :].to(device), data[:,args.hist_len:,0].to(device)     #x : batch_size * seq_len * input_size
+        print(x.size())
         optimizer.zero_grad()
         out = model(x)
         loss = F.mse_loss(out.float(), y.float())
@@ -77,6 +81,8 @@ def train(model, optimizer, train_batch, backprop, device):
             loss.backward()
             optimizer.step()
         train_loss += loss.item()
+        cnt+=1
+    return
     size = len(train_batch.dataset)
     print(f"size : {size}")
     avg_loss = train_loss/size
@@ -147,28 +153,30 @@ def main():
         print(f"\nTrain Area : {train_location}\n")
         #   , test_location_0, test_location_1, test_location_2, test_location_3, test_location_4, test_location_5)
         
-        train_dataset  = pd.read_csv(f'./dataset/solar_weather_2017_2020_{train_location}.csv', encoding='cp949', index_col=0)
+        train_dataset  = pd.read_csv(f'./dataset/solar_weather_2017_2020_{train_location}.csv', encoding='cp949')#, index_col=0)
         test_dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_0}.csv', encoding='cp949', index_col=0)
         test_dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_1}.csv', encoding='cp949', index_col=0)
         test_dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_2}.csv', encoding='cp949', index_col=0)
         test_dataset_3 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_3}.csv', encoding='cp949', index_col=0)
         test_dataset_4 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_4}.csv', encoding='cp949', index_col=0)
         test_dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_{test_location_5}.csv', encoding='cp949', index_col=0)
+        print(train_dataset.info())
 
         train_dataset = KORCSVDataset(data=train_dataset, locals=None, seq_len=args.hist_len+args.pred_len, norm='MinMax')
         # test_dataset_0 = KORCSVDataset(data=test_dataset_0, locals=None, seq_len=args.seq_len, norm='MinMax')
         # test_dataset_1 = KORCSVDataset(data=test_dataset_1, locals=None, seq_len=args.seq_len, norm='MinMax')
         # test_dataset_2 = KORCSVDataset(data=test_dataset_2, locals=None, seq_len=args.seq_len, norm='MinMax')
-        # test_dataset_3 = KORCSVDataset(data=test_dataset_3, locals=None, seq_len=args.seq_len, norm='MinMax')
+        # test_dataset_3 = KORwCSVDataset(data=test_dataset_3, locals=None, seq_len=args.seq_len, norm='MinMax')
         # test_dataset_4 = KORCSVDataset(data=test_dataset_4, locals=None, seq_len=args.seq_len, norm='MinMax')
         # test_dataset_5 = KORCSVDataset(data=test_dataset_5, locals=None, seq_len=args.seq_len, norm='MinMax')
 
         print(train_dataset)
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, drop_last=True)
-        for idx, data in enumerate(train_loader):
-            print(idx, data)
-            print(data.shape)
-            break
+        # for idx, data in enumerate(train_loader):
+        #     print(idx, data)
+        #     print(data.shape)
+        #     break
+        print(len(train_loader))
         model = args.model(hist_len=args.hist_len, pred_len=args.pred_len, input_size=args.input_size, hidden_size=args.hidden_size, num_layers=args.num_layers, device=args.device, args=args).to(args.device)
         loss_list = []
         optimizer = optim.Adam(model.parameters(), lr=args.lr)

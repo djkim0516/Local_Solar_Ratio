@@ -214,7 +214,7 @@ class CNN1(nn.Module):
             x = x.requires_grad_(True)
             x = torch.tensor(x, dtype = torch.float32)
             
-        print(x.shape)
+        # print(x.shape)
         out = self.relu(self.conv1(x))
         out = self.dropout(out)
         out = self.relu(self.conv2(out))
@@ -222,7 +222,7 @@ class CNN1(nn.Module):
         out = self.relu(self.conv3(out))
         out = self.dropout(out)
         # out = out.view(16, -1)              #!!!!
-        print(out.shape)
+        # print(out.shape)
         out = self.relu(self.fc1(out.view(x.shape[0], -1)))
         # out = self.relu(self.fc2(out))
         out = self.fc2(out)
