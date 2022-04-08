@@ -82,7 +82,6 @@ def train(model, optimizer, train_batch, backprop, device):
             optimizer.step()
         train_loss += loss.item()
         cnt+=1
-    return
     size = len(train_batch.dataset)
     print(f"size : {size}")
     avg_loss = train_loss/size

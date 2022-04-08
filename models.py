@@ -196,7 +196,7 @@ class CNN1(nn.Module):
         super(CNN1, self).__init__()
         # self.conv1 = nn.Conv2d(8, 128, kernel_size=7, bias=True)    #in_channel, out_channel, 
         self.conv1 = nn.Conv1d(input_size, hidden_size, kernel_size=24, bias=True)    #in_channel, out_channel, 24시간을 봄
-        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=args.input_size, bias=True)
+        self.conv2 = nn.Conv1d(hidden_size, hidden_size, kernel_size=input_size, bias=True)
         self.conv3 = nn.Conv1d(hidden_size, 8, kernel_size=8, bias=True)     
         self.fc1 = nn.Linear(8*124, 128, bias=True)      #!!!! 공식으로 변경하기
         self.fc2 = nn.Linear(128, pred_len, bias=True)
@@ -207,7 +207,8 @@ class CNN1(nn.Module):
     
     def forward(self, x):
         # # x = x.view(-1, 8, 168)              #!!!!
-        x = x.transpose(1,2)
+        # x = x.transpose(1,2)
+        # x = x.transpose(0)
         if self.device == 'cuda:0':
             x = x.type(torch.cuda.FloatTensor).clone().detach().requires_grad_(True)          #! 여기서 메모리 누수 발생하는듯
         else:
