@@ -19,18 +19,18 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--device',type=str,default='cuda:0' if torch.cuda.is_available() else 'cpu', help='cuda')
 # parser.add_argument('--data',type=str,default='busan_incheon_hadong_solarratio_temp_pre_pm_time2d_2013_2020.npy',help='data path')
-parser.add_argument('--features', type=list, default=[0,1,2,3,4,5,6,7], help='feature index')   #input_size도 함께 변경
-parser.add_argument('--input_size',type=int,default=15,help='input size')
-parser.add_argument('--batch_size',type=int,default=32,help='batch size')
-parser.add_argument('--model', type=any, default=CNN1, help='model')
-parser.add_argument('--hist_len',type=int,default=24*7,help='hist len')
+# parser.add_argument('--features', type=list, default=[0,1,2,3,4,5,6,7], help='feature index')   #input_size도 함께 변경
+parser.add_argument('--input_size',type=int,default=14,help='input size')
+parser.add_argument('--batch_size',type=int,default=64,help='batch size')
+parser.add_argument('--model', type=any, default=DNN1, help='model')
+parser.add_argument('--hist_len',type=int,default=24*3,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
 parser.add_argument('--hidden_size',type=int,default=512,help='hidden size')
 parser.add_argument('--num_layers',type=int,default=8,help='num layers')
 parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
 parser.add_argument('--epochs',type=int,default=2,help='epochs')
-parser.add_argument('--year_term',type=int,default=[2017010101,2020122509], help='start year ~ end year')   #feature nan값이 없는 최대 범위
+parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
 parser.add_argument('--metrics', type=str, default='l2', help='metrics')
@@ -50,7 +50,6 @@ args = parser.parse_args()
 
 #* main으로 넣어서 모두 가능하게 하기!
 
-    
 
 
 
@@ -59,3 +58,12 @@ args = parser.parse_args()
 #! 여기까지는 얼추 완료
 
 
+#* TO-DO
+"""
+발전률과의 비율 계산
+계산된 비율 기반 weight matrix 생성
+각 지역별로 모델 생성 후 학습
+
+
+
+"""
