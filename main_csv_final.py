@@ -27,9 +27,9 @@ parser.add_argument('--hist_len',type=int,default=24*3,help='hist len')
 parser.add_argument('--pred_len',type=int,default=1,help='pred len')
 parser.add_argument('--hidden_size',type=int,default=512,help='hidden size')
 parser.add_argument('--num_layers',type=int,default=8,help='num layers')
-parser.add_argument('--norm', type=str, default='MinMax',help='Normalization Type')
+parser.add_argument('--norm', type=str, default='Standard',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.001,help='lr')
-parser.add_argument('--epochs',type=int,default=2,help='epochs')
+parser.add_argument('--epochs',type=int,default=10,help='epochs')
 parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
@@ -67,3 +67,79 @@ args = parser.parse_args()
 
 
 """
+
+#!data scaler
+def data_scale(data, norm):
+    if norm == "MinMax":
+        scaler = MinMaxScaler()
+    elif norm == "Standard":
+        scaler = StandardScaler()
+    else:
+        NotImplementedError('wrong scaler type')
+    data_transform = data.copy()
+    data_transform[:] = scaler.fit_transform(data)
+    return data_transform
+
+
+
+def local_model(data, args):
+
+    model = args.model(hist_len=args.hist_len, pred_len=args.pred_len, input_size=args.input_size, hidden_size=args.hidden_size, num_layers=args.num_layers, device=args.device).to(args.device)
+    model.train()
+    train_loss_graph = pd.DataFrame(columns=['train_loss'], index=[i for i in range(args.epochs)])
+    result_df = pd.DataFrame(columns=['model_prediction', 'real_value'], index=data.index)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    seq_len = args.hist_len + args.pred_len
+    idx_range = len(data) - seq_len
+    # X, y = data.iloc[:, 1:], data.iloc[:,0]
+    X, y = data.iloc[:, 1:].to_numpy(), data.iloc[:,0].to_numpy()
+    
+    for epoch in range(args.epochs):
+        print(epoch)
+        train_loss = 0.0
+        for idx in range(0, idx_range):
+            # temp_X = torch.FloatTensor(X.iloc[idx:idx+args.hist_len, :].values).to(args.device)
+            temp_X = torch.FloatTensor(X[idx:idx+args.hist_len, :]).to(args.device)
+            temp_y = torch.FloatTensor([y[idx+seq_len]]).to(args.device)
+            optimizer.zero_grad()
+            out =model(temp_X)
+            loss = F.mse_loss(out.float(), temp_y.float())
+            result_df.iloc[idx+seq_len, :] = out.cpu().detach().numpy().item(), temp_y.cpu().detach().numpy().item()
+            loss.backward()
+            optimizer.step()
+            train_loss+=loss.item()
+        train_loss_graph.loc[epoch, 'train_loss'] = train_loss
+    
+    return model, result_df, train_loss_graph
+
+
+
+def main():
+    
+    start_time = arrow.now().format('YYYYMMDDHHmmss')
+    print(start_time)
+    
+    device = torch.device(args.device)
+    print(device)
+    
+    try:
+        os.mkdir(os.getcwd() + f"/result")
+    except:
+        pass
+    os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
+    result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
+    print(f"Directory Created")
+
+    
+    
+    dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_경상대.csv', encoding='cp949', index_col=0)
+    dataset_transform_0 =data_scale(dataset_0, args.norm)
+    model_0, result_df_0, train_loss_graph_0 = local_model(dataset_transform_0, args)
+    print(train_loss_graph_0)
+    
+    result_df_0.to_csv(f'{result_dir}/pred_result_0.csv')
+    train_loss_graph_0.to_csv(f'{result_dir}/loss_graph_0.csv')
+    
+    
+if __name__ == '__main__':
+    main()
