@@ -28,8 +28,8 @@ parser.add_argument('--pred_len',type=int,default=1,help='pred len')
 parser.add_argument('--hidden_size',type=int,default=512,help='hidden size')
 parser.add_argument('--num_layers',type=int,default=8,help='num layers')
 parser.add_argument('--norm', type=str, default='Standard',help='Normalization Type')
-parser.add_argument('--lr',type=int,default=0.001,help='lr')
-parser.add_argument('--epochs',type=int,default=10,help='epochs')
+parser.add_argument('--lr',type=int,default=0.0001,help='lr')
+parser.add_argument('--epochs',type=int,default=5,help='epochs')
 parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
@@ -103,11 +103,13 @@ def local_model(data, args):
             temp_y = torch.FloatTensor([y[idx+seq_len]]).to(args.device)
             optimizer.zero_grad()
             out =model(temp_X)
-            loss = F.mse_loss(out.float(), temp_y.float())
+            # loss = F.mse_loss(out.float(), temp_y.float())
+            loss = F.l1_loss(out.float(), temp_y.float())
             result_df.iloc[idx+seq_len, :] = out.cpu().detach().numpy().item(), temp_y.cpu().detach().numpy().item()
             loss.backward()
             optimizer.step()
             train_loss+=loss.item()
+            print(loss)
         train_loss_graph.loc[epoch, 'train_loss'] = train_loss
     
     return model, result_df, train_loss_graph
@@ -133,13 +135,62 @@ def main():
     
     
     dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_경상대.csv', encoding='cp949', index_col=0)
+    dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_남제주소내.csv', encoding='cp949', index_col=0)
+    dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_부산복합자재창고.csv', encoding='cp949', index_col=0)
+    dataset_3 = pd.read_csv(f'./dataset/solar_weather_2017_2020_영월본부.csv', encoding='cp949', index_col=0)
+    dataset_4 = pd.read_csv(f'./dataset/solar_weather_2017_2020_인천수산정수장.csv', encoding='cp949', index_col=0)
+    dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_하동보건소.csv', encoding='cp949', index_col=0)
+    dataset_6 = pd.read_csv(f'./dataset/solar_weather_2017_2020_신안.csv', encoding='cp949', index_col=0)
+
     dataset_transform_0 =data_scale(dataset_0, args.norm)
+    dataset_transform_1 =data_scale(dataset_1, args.norm)
+    dataset_transform_2 =data_scale(dataset_2, args.norm)
+    dataset_transform_3 =data_scale(dataset_3, args.norm)
+    dataset_transform_4 =data_scale(dataset_4, args.norm)
+    dataset_transform_5 =data_scale(dataset_5, args.norm)
+    dataset_transform_6 =data_scale(dataset_6, args.norm)
+    
     model_0, result_df_0, train_loss_graph_0 = local_model(dataset_transform_0, args)
+    model_1, result_df_1, train_loss_graph_1 = local_model(dataset_transform_1, args)
+    model_2, result_df_2, train_loss_graph_2 = local_model(dataset_transform_2, args)
+    model_3, result_df_3, train_loss_graph_3 = local_model(dataset_transform_3, args)
+    model_4, result_df_4, train_loss_graph_4 = local_model(dataset_transform_4, args)
+    model_5, result_df_5, train_loss_graph_5 = local_model(dataset_transform_5, args)
+    model_6, result_df_6, train_loss_graph_6 = local_model(dataset_transform_6, args)
+    
     print(train_loss_graph_0)
+    print(train_loss_graph_1)
+    print(train_loss_graph_2)
+    print(train_loss_graph_3)
+    print(train_loss_graph_4)
+    print(train_loss_graph_5)
+    print(train_loss_graph_6)
     
     result_df_0.to_csv(f'{result_dir}/pred_result_0.csv')
-    train_loss_graph_0.to_csv(f'{result_dir}/loss_graph_0.csv')
+    result_df_1.to_csv(f'{result_dir}/pred_result_1.csv')
+    result_df_2.to_csv(f'{result_dir}/pred_result_2.csv')
+    result_df_3.to_csv(f'{result_dir}/pred_result_3.csv')
+    result_df_4.to_csv(f'{result_dir}/pred_result_4.csv')
+    result_df_5.to_csv(f'{result_dir}/pred_result_5.csv')
+    result_df_6.to_csv(f'{result_dir}/pred_result_6.csv')
     
+    train_loss_graph_0.to_csv(f'{result_dir}/loss_graph_0.csv')
+    train_loss_graph_1.to_csv(f'{result_dir}/loss_graph_1.csv')
+    train_loss_graph_2.to_csv(f'{result_dir}/loss_graph_2.csv')
+    train_loss_graph_3.to_csv(f'{result_dir}/loss_graph_3.csv')
+    train_loss_graph_4.to_csv(f'{result_dir}/loss_graph_4.csv')
+    train_loss_graph_5.to_csv(f'{result_dir}/loss_graph_5.csv')
+    train_loss_graph_6.to_csv(f'{result_dir}/loss_graph_6.csv')
+    
+    torch.save(model_0, "./model_0.pt")
+    torch.save(model_1, "./model_1.pt")
+    torch.save(model_2, "./model_2.pt")
+    torch.save(model_3, "./model_3.pt")
+    torch.save(model_4, "./model_4.pt")
+    torch.save(model_5, "./model_5.pt")
+    torch.save(model_6, "./model_6.pt")
+    
+    # model_loaded = torch.load('./test_model.pt').to(device)
     
 if __name__ == '__main__':
     main()
