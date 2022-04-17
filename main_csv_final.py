@@ -151,6 +151,44 @@ def main():
     dataset_transform_5 =data_scale(dataset_5, args.norm)
     dataset_transform_6 =data_scale(dataset_6, args.norm)
     
+    #! 상관계수 계산하기 위한 주간 데이터
+    dataset_sunny_0 = dataset_transform_0.iloc[12::24].copy()
+    dataset_sunny_1 = dataset_transform_1.iloc[12::24].copy()
+    dataset_sunny_2 = dataset_transform_2.iloc[12::24].copy()
+    dataset_sunny_3 = dataset_transform_3.iloc[12::24].copy()
+    dataset_sunny_4 = dataset_transform_4.iloc[12::24].copy()
+    dataset_sunny_5 = dataset_transform_5.iloc[12::24].copy()
+    dataset_sunny_6 = dataset_transform_6.iloc[12::24].copy()
+    
+    #!이상치 제거
+    dataset_sunny_0 = detect_outliers(dataset_sunny_0, 1, dataset_sunny_0.columns)
+    dataset_sunny_1 = detect_outliers(dataset_sunny_1, 1, dataset_sunny_1.columns)
+    dataset_sunny_2 = detect_outliers(dataset_sunny_2, 1, dataset_sunny_2.columns)
+    dataset_sunny_3 = detect_outliers(dataset_sunny_3, 1, dataset_sunny_3.columns)
+    dataset_sunny_4 = detect_outliers(dataset_sunny_4, 1, dataset_sunny_4.columns)
+    dataset_sunny_5 = detect_outliers(dataset_sunny_5, 1, dataset_sunny_5.columns)
+    dataset_sunny_6 = detect_outliers(dataset_sunny_6, 1, dataset_sunny_6.columns)
+    
+    dataset_corr_0 = dataset_sunny_0.corr().loc['발전률'][1:]
+    dataset_corr_1 = dataset_sunny_1.corr().loc['발전률'][1:]
+    dataset_corr_2 = dataset_sunny_2.corr().loc['발전률'][1:]
+    dataset_corr_3 = dataset_sunny_3.corr().loc['발전률'][1:]
+    dataset_corr_4 = dataset_sunny_4.corr().loc['발전률'][1:]
+    dataset_corr_5 = dataset_sunny_5.corr().loc['발전률'][1:]
+    dataset_corr_6 = dataset_sunny_6.corr().loc['발전률'][1:]
+    # print(dataset_corr_0)
+    # print(dataset_corr_1)
+    # print(dataset_corr_2)
+    # print(dataset_corr_3)
+    # print(dataset_corr_4)
+    # print(dataset_corr_5)
+    # print(dataset_corr_6)
+    
+    dataset_corr = pd.concat([dataset_corr_0, dataset_corr_1, dataset_corr_2, dataset_corr_3, dataset_corr_4, dataset_corr_5, dataset_corr_6], axis=1)
+    print(dataset_corr.shape)
+    
+    
+    
     #! 모델 존재 여부 확인 후 학습 or 불러오기
     
     if len(glob.glob('./models/*.pt')) == 7:
@@ -214,14 +252,15 @@ def main():
     
     model_list = [model_0, model_1, model_2, model_3, model_4, model_5, model_6]
     num_list = [num for num in range(len(model_list))]
-    for target_num in num_list:
+    for target_num in num_list:     #target_num 예측 위치
         print(target_num)
         num_list_copy = num_list[:]
         target_model = model_list[num_list_copy.pop(target_num)]
+        # num_list_copy 는 나머지 6개 지역
         train_model_0, train_model_1, train_model_2, train_model_3, train_model_4,train_model_5 = \
         model_list[num_list_copy[0]], model_list[num_list_copy[1]], model_list[num_list_copy[2]], model_list[num_list_copy[3]], model_list[num_list_copy[4]], model_list[num_list_copy[5]]
-        print(train_model_0)
-    
+        num_list_copy
+
     
     
     

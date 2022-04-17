@@ -94,7 +94,7 @@ def detect_outliers(df, n, features):
         IQR = Q3 - Q1 
         outlier_step = 1.5 * IQR 
         print(f"Counting Outliers in {col}...")
-        print(Q1 - outlier_step, Q3 + outlier_step)
+        # print(Q1 - outlier_step, Q3 + outlier_step)
         outlier_list_col = df[(df[col] < Q1 - outlier_step) | (df[col] > Q3 + outlier_step)].index 
         outlier_indices.extend(outlier_list_col) 
     outlier_indices = Counter(outlier_indices) 
