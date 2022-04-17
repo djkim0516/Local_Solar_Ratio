@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 import argparse
 import time
+import glob
 import arrow
 import pandas as pd
 from dataset import *
@@ -133,7 +134,7 @@ def main():
     print(f"Directory Created")
 
     
-    
+    #! 데이터 불러온 후 정규화
     dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_경상대.csv', encoding='cp949', index_col=0)
     dataset_1 = pd.read_csv(f'./dataset/solar_weather_2017_2020_남제주소내.csv', encoding='cp949', index_col=0)
     dataset_2 = pd.read_csv(f'./dataset/solar_weather_2017_2020_부산복합자재창고.csv', encoding='cp949', index_col=0)
@@ -150,47 +151,79 @@ def main():
     dataset_transform_5 =data_scale(dataset_5, args.norm)
     dataset_transform_6 =data_scale(dataset_6, args.norm)
     
-    model_0, result_df_0, train_loss_graph_0 = local_model(dataset_transform_0, args)
-    model_1, result_df_1, train_loss_graph_1 = local_model(dataset_transform_1, args)
-    model_2, result_df_2, train_loss_graph_2 = local_model(dataset_transform_2, args)
-    model_3, result_df_3, train_loss_graph_3 = local_model(dataset_transform_3, args)
-    model_4, result_df_4, train_loss_graph_4 = local_model(dataset_transform_4, args)
-    model_5, result_df_5, train_loss_graph_5 = local_model(dataset_transform_5, args)
-    model_6, result_df_6, train_loss_graph_6 = local_model(dataset_transform_6, args)
+    #! 모델 존재 여부 확인 후 학습 or 불러오기
     
-    print(train_loss_graph_0)
-    print(train_loss_graph_1)
-    print(train_loss_graph_2)
-    print(train_loss_graph_3)
-    print(train_loss_graph_4)
-    print(train_loss_graph_5)
-    print(train_loss_graph_6)
+    if len(glob.glob('./models/*.pt')) == 7:
+        # model_loaded = torch.load('./test_model.pt').to(device)
+        # loc_list = ['경상대', '남제주소내', '부산복합자재창고', '영월본부', '인천수산정수장', '하동보건소', '신안']
+        model_0 = torch.load('./models/model_0.pt').to(device)     #경상대
+        model_1 = torch.load('./models/model_1.pt').to(device)     #남제주소내
+        model_2 = torch.load('./models/model_2.pt').to(device)     #부산복합자재창고
+        model_3 = torch.load('./models/model_3.pt').to(device)     #영월본부
+        model_4 = torch.load('./models/model_4.pt').to(device)     #인천수산정수장
+        model_5 = torch.load('./models/model_5.pt').to(device)     #하동보건소
+        model_6 = torch.load('./models/model_6.pt').to(device)     #신안
+        
     
-    result_df_0.to_csv(f'{result_dir}/pred_result_0.csv')
-    result_df_1.to_csv(f'{result_dir}/pred_result_1.csv')
-    result_df_2.to_csv(f'{result_dir}/pred_result_2.csv')
-    result_df_3.to_csv(f'{result_dir}/pred_result_3.csv')
-    result_df_4.to_csv(f'{result_dir}/pred_result_4.csv')
-    result_df_5.to_csv(f'{result_dir}/pred_result_5.csv')
-    result_df_6.to_csv(f'{result_dir}/pred_result_6.csv')
-    
-    train_loss_graph_0.to_csv(f'{result_dir}/loss_graph_0.csv')
-    train_loss_graph_1.to_csv(f'{result_dir}/loss_graph_1.csv')
-    train_loss_graph_2.to_csv(f'{result_dir}/loss_graph_2.csv')
-    train_loss_graph_3.to_csv(f'{result_dir}/loss_graph_3.csv')
-    train_loss_graph_4.to_csv(f'{result_dir}/loss_graph_4.csv')
-    train_loss_graph_5.to_csv(f'{result_dir}/loss_graph_5.csv')
-    train_loss_graph_6.to_csv(f'{result_dir}/loss_graph_6.csv')
-    
-    torch.save(model_0, "./model_0.pt")
-    torch.save(model_1, "./model_1.pt")
-    torch.save(model_2, "./model_2.pt")
-    torch.save(model_3, "./model_3.pt")
-    torch.save(model_4, "./model_4.pt")
-    torch.save(model_5, "./model_5.pt")
-    torch.save(model_6, "./model_6.pt")
+    else:
+        model_0, result_df_0, train_loss_graph_0 = local_model(dataset_transform_0, args)
+        model_1, result_df_1, train_loss_graph_1 = local_model(dataset_transform_1, args)
+        model_2, result_df_2, train_loss_graph_2 = local_model(dataset_transform_2, args)
+        model_3, result_df_3, train_loss_graph_3 = local_model(dataset_transform_3, args)
+        model_4, result_df_4, train_loss_graph_4 = local_model(dataset_transform_4, args)
+        model_5, result_df_5, train_loss_graph_5 = local_model(dataset_transform_5, args)
+        model_6, result_df_6, train_loss_graph_6 = local_model(dataset_transform_6, args)
+        
+        print(train_loss_graph_0)
+        print(train_loss_graph_1)
+        print(train_loss_graph_2)
+        print(train_loss_graph_3)
+        print(train_loss_graph_4)
+        print(train_loss_graph_5)
+        print(train_loss_graph_6)
+        
+        result_df_0.to_csv(f'{result_dir}/pred_result_0.csv')
+        result_df_1.to_csv(f'{result_dir}/pred_result_1.csv')
+        result_df_2.to_csv(f'{result_dir}/pred_result_2.csv')
+        result_df_3.to_csv(f'{result_dir}/pred_result_3.csv')
+        result_df_4.to_csv(f'{result_dir}/pred_result_4.csv')
+        result_df_5.to_csv(f'{result_dir}/pred_result_5.csv')
+        result_df_6.to_csv(f'{result_dir}/pred_result_6.csv')
+        
+        train_loss_graph_0.to_csv(f'{result_dir}/loss_graph_0.csv')
+        train_loss_graph_1.to_csv(f'{result_dir}/loss_graph_1.csv')
+        train_loss_graph_2.to_csv(f'{result_dir}/loss_graph_2.csv')
+        train_loss_graph_3.to_csv(f'{result_dir}/loss_graph_3.csv')
+        train_loss_graph_4.to_csv(f'{result_dir}/loss_graph_4.csv')
+        train_loss_graph_5.to_csv(f'{result_dir}/loss_graph_5.csv')
+        train_loss_graph_6.to_csv(f'{result_dir}/loss_graph_6.csv')
+        
+        torch.save(model_0, "./model_0.pt")
+        torch.save(model_1, "./model_1.pt")
+        torch.save(model_2, "./model_2.pt")
+        torch.save(model_3, "./model_3.pt")
+        torch.save(model_4, "./model_4.pt")
+        torch.save(model_5, "./model_5.pt")
+        torch.save(model_6, "./model_6.pt")
     
     # model_loaded = torch.load('./test_model.pt').to(device)
+    
+    #! 학습된 모델로 지역별로 돌아가며 예측
+    
+    model_list = [model_0, model_1, model_2, model_3, model_4, model_5, model_6]
+    
+    model_list = [model_0, model_1, model_2, model_3, model_4, model_5, model_6]
+    num_list = [num for num in range(len(model_list))]
+    for target_num in num_list:
+        print(target_num)
+        num_list_copy = num_list[:]
+        target_model = model_list[num_list_copy.pop(target_num)]
+        train_model_0, train_model_1, train_model_2, train_model_3, train_model_4,train_model_5 = \
+        model_list[num_list_copy[0]], model_list[num_list_copy[1]], model_list[num_list_copy[2]], model_list[num_list_copy[3]], model_list[num_list_copy[4]], model_list[num_list_copy[5]]
+        print(train_model_0)
+    
+    
+    
     
 if __name__ == '__main__':
     main()
