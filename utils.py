@@ -87,13 +87,14 @@ def mape_loss(y_pred, target):
 
 def detect_outliers(df, n, features): 
     outlier_indices = [] 
+    # df_name = [x for x in globals() if globals()[x] is df]
+    print(f"Counting Outliers in {df.__str__}...")
     for col in features: 
         
         Q1 = np.percentile(df[col], 25) 
         Q3 = np.percentile(df[col], 75) 
         IQR = Q3 - Q1 
         outlier_step = 1.5 * IQR 
-        print(f"Counting Outliers in {col}...")
         # print(Q1 - outlier_step, Q3 + outlier_step)
         outlier_list_col = df[(df[col] < Q1 - outlier_step) | (df[col] > Q3 + outlier_step)].index 
         outlier_indices.extend(outlier_list_col) 

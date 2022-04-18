@@ -116,6 +116,11 @@ def local_model(data, args):
     return model, result_df, train_loss_graph
 
 
+def test(data, model, args):
+    
+
+
+
 
 def main():
     
@@ -133,6 +138,8 @@ def main():
     result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
     print(f"Directory Created")
 
+    loc_list = ['경상대', '남제주소내', '부산복합자재창고', '영월본부', '인천수산정수장', '하동보건소', '신안']
+    feature_list = ['기온(°C)','강수량(mm)','풍속(m__s)','습도(%)','증기압(hPa)','현지기압(hPa)','일조(hr)','지면온도(°C)','SO2','CO','O3','NO2','PM10','PM25']
     
     #! 데이터 불러온 후 정규화
     dataset_0 = pd.read_csv(f'./dataset/solar_weather_2017_2020_경상대.csv', encoding='cp949', index_col=0)
@@ -150,6 +157,7 @@ def main():
     dataset_transform_4 =data_scale(dataset_4, args.norm)
     dataset_transform_5 =data_scale(dataset_5, args.norm)
     dataset_transform_6 =data_scale(dataset_6, args.norm)
+    dataset_transform = [dataset_transform_0, dataset_transform_1, dataset_transform_2, dataset_transform_3, dataset_transform_4, dataset_transform_5, dataset_transform_6] 
     
     #! 상관계수 계산하기 위한 주간 데이터
     dataset_sunny_0 = dataset_transform_0.iloc[12::24].copy()
@@ -184,9 +192,12 @@ def main():
     # print(dataset_corr_5)
     # print(dataset_corr_6)
     
-    dataset_corr = pd.concat([dataset_corr_0, dataset_corr_1, dataset_corr_2, dataset_corr_3, dataset_corr_4, dataset_corr_5, dataset_corr_6], axis=1)
-    print(dataset_corr.shape)
+    solar_to_feature_corr = pd.concat([dataset_corr_0, dataset_corr_1, dataset_corr_2, dataset_corr_3, dataset_corr_4, dataset_corr_5, dataset_corr_6], axis=1)
+    solar_to_feature_corr.columns = loc_list
+    solar_to_feature_corr.to_csv('./dataset/corr/solar_to_feature_corr.csv', encoding='cp949')      #*지역별 발전률-변수 corr
+    # print(solar_to_feature_corr.shape)
     
+        
     
     
     #! 모델 존재 여부 확인 후 학습 or 불러오기
@@ -257,11 +268,35 @@ def main():
         num_list_copy = num_list[:]
         target_model = model_list[num_list_copy.pop(target_num)]
         # num_list_copy 는 나머지 6개 지역
-        train_model_0, train_model_1, train_model_2, train_model_3, train_model_4,train_model_5 = \
+        train_model_0, train_model_1, train_model_2, train_model_3, train_model_4, train_model_5 = \
         model_list[num_list_copy[0]], model_list[num_list_copy[1]], model_list[num_list_copy[2]], model_list[num_list_copy[3]], model_list[num_list_copy[4]], model_list[num_list_copy[5]]
-        num_list_copy
+        
+        
+        local_feature_corr = pd.DataFrame()
+        for feature in feature_list:
+            feature_corr = pd.read_csv(f"./dataset/corr/feature_corr_2017_2020_{feature}.csv", encoding='cp949', index_col=0)
+            local_feature_corr = pd.concat([local_feature_corr, feature_corr.iloc[num_list_copy, target_num]], axis=1)
+        print(solar_to_feature_corr.shape)
+        print(local_feature_corr.shape)
+        local_feature_corr.columns = feature_list
+        local_feature_corr.to_csv(f"./dataset/corr/local_feature_corr_{target_num}.csv", encoding='cp949')
 
-    
+        local_solar_to_feature_corr = solar_to_feature_corr.iloc[:, num_list_copy].T.copy()    #* target 뺀 나머지
+        print(local_solar_to_feature_corr.shape)
+        
+        local_weight = pd.DataFrame(np.zeros((1,6)))
+        for loc_num in local_weight.columns:
+            # print(loc_num)
+            # print(local_solar_to_feature_corr.iloc[loc_num].to_numpy())
+            # print(local_feature_corr.iloc[loc_num].to_numpy())
+            # print(np.matmul(local_solar_to_feature_corr.iloc[loc_num].to_numpy(), local_feature_corr.iloc[loc_num].to_numpy()))
+            local_weight[loc_num] = np.matmul(abs(local_solar_to_feature_corr.iloc[loc_num].to_numpy()), abs(local_feature_corr.iloc[loc_num].to_numpy()))
+        
+        local_weight = local_weight.div(local_weight.sum(axis=1), axis=0)   #* 계산된 비율
+        
+        dataset_transform[target_num]
+        
+        
     
     
 if __name__ == '__main__':
