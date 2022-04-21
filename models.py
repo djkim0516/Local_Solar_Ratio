@@ -138,7 +138,8 @@ class DNN1(nn.Module):
         self.device = device
         self.fc1 = nn.Linear(self.input_size*self.hist_len, self.hidden_size, bias=True)
         self.fc2 = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
-        self.fc3 = nn.Linear(self.hidden_size, self.pred_len, bias=True)
+        self.fc3 = nn.Linear(self.hidden_size, self.hidden_size, bias=True)
+        self.fc4 = nn.Linear(self.hidden_size, self.pred_len, bias=True)
         self.relu = nn.ReLU()
         self.float()
 
@@ -150,6 +151,8 @@ class DNN1(nn.Module):
         out = self.fc2(out)
         out = self.relu(out)
         out = self.fc3(out)
+        out = self.relu(out)
+        out = self.fc4(out)
         # out = self.relu(out)
         
         return out

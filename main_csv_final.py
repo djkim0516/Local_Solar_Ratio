@@ -1,3 +1,5 @@
+from tracemalloc import start
+from sklearn.preprocessing import RobustScaler
 import torch
 import torch.nn as nn
 import numpy as np
@@ -30,7 +32,7 @@ parser.add_argument('--hidden_size',type=int,default=512,help='hidden size')
 parser.add_argument('--num_layers',type=int,default=8,help='num layers')
 parser.add_argument('--norm', type=str, default='Standard',help='Normalization Type')
 parser.add_argument('--lr',type=int,default=0.0001,help='lr')
-parser.add_argument('--epochs',type=int,default=5,help='epochs')
+parser.add_argument('--epochs',type=int,default=30,help='epochs')
 parser.add_argument('--year_term',type=int,default=[2017010101,2021010101], help='start year ~ end year')   #feature nan값이 없는 최대 범위
 parser.add_argument('--train_area', type=str,default='Busan', help='Train Area')        #train 외 지역은 test 지역
 parser.add_argument('--backprop', type=bool, default=True, help='Backprop')
@@ -75,6 +77,8 @@ def data_scale(data, norm):
         scaler = MinMaxScaler()
     elif norm == "Standard":
         scaler = StandardScaler()
+    elif norm == "Robust":
+        scaler = RobustScaler()
     else:
         NotImplementedError('wrong scaler type')
     data_transform = data.copy()
@@ -96,7 +100,7 @@ def local_model(data, args):
     X, y = data.iloc[:, 1:].to_numpy(), data.iloc[:,0].to_numpy()
     
     for epoch in range(args.epochs):
-        print(epoch)
+        print(f"Train Epoch : {epoch}")
         train_loss = 0.0
         for idx in range(0, idx_range):
             # temp_X = torch.FloatTensor(X.iloc[idx:idx+args.hist_len, :].values).to(args.device)
@@ -110,21 +114,56 @@ def local_model(data, args):
             loss.backward()
             optimizer.step()
             train_loss+=loss.item()
-            print(loss)
+            # print(loss)
         train_loss_graph.loc[epoch, 'train_loss'] = train_loss
     
     return model, result_df, train_loss_graph
 
 
+# def test(data, model, args):
+#     result =
+#     return  result
 def test(data, model, args):
+
+    model.eval()
+    test_loss_graph = pd.DataFrame(columns=['test_loss'], index=[i for i in range(args.epochs)])
+    result_df = pd.DataFrame(columns=['model_prediction', 'real_value'], index=data.index)
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    seq_len = args.hist_len + args.pred_len
+    idx_range = len(data) - seq_len
+    # X, y = data.iloc[:, 1:], data.iloc[:,0]
+    X, y = data.iloc[:, 1:].to_numpy(), data.iloc[:,0].to_numpy()
     
+    for epoch in range(1):
+        print(epoch)
+        test_loss = 0.0
+        for idx in range(0, idx_range):
+            # temp_X = torch.FloatTensor(X.iloc[idx:idx+args.hist_len, :].values).to(args.device)
+            temp_X = torch.FloatTensor(X[idx:idx+args.hist_len, :]).to(args.device)
+            temp_y = torch.FloatTensor([y[idx+seq_len]]).to(args.device)
+            # optimizer.zero_grad()
+            out =model(temp_X)
+            # loss = F.mse_loss(out.float(), temp_y.float())
+            loss = F.l1_loss(out.float(), temp_y.float())
+            result_df.iloc[idx+seq_len, :] = out.cpu().detach().numpy().item(), temp_y.cpu().detach().numpy().item()
+            # loss.backward()
+            # optimizer.step()
+            test_loss+=loss.item()
+        # print(f"test loss : {test_loss/idx_range}")
+        test_loss_graph.loc[epoch, 'test_loss'] = test_loss
+    
+    return result_df, test_loss_graph
+
+
+
 
 
 
 
 def main():
     
-    start_time = arrow.now().format('YYYYMMDDHHmmss')
+    start_time = arrow.now()#.format('YYYYMMDDHHmmss')
+    start_time_str = start_time.format('YYYYMMDDHHmmss')
     print(start_time)
     
     device = torch.device(args.device)
@@ -134,8 +173,8 @@ def main():
         os.mkdir(os.getcwd() + f"/result")
     except:
         pass
-    os.mkdir(os.getcwd() + f"/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
-    result_dir = f"{os.getcwd()}/result/{start_time}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
+    os.mkdir(os.getcwd() + f"/result/{start_time_str}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}")
+    result_dir = f"{os.getcwd()}/result/{start_time_str}_hist{args.hist_len}_pred{args.pred_len}_model{args.model.__name__}_epoch{args.epochs}_train{args.train_area}"
     print(f"Directory Created")
 
     loc_list = ['경상대', '남제주소내', '부산복합자재창고', '영월본부', '인천수산정수장', '하동보건소', '신안']
@@ -150,16 +189,30 @@ def main():
     dataset_5 = pd.read_csv(f'./dataset/solar_weather_2017_2020_하동보건소.csv', encoding='cp949', index_col=0)
     dataset_6 = pd.read_csv(f'./dataset/solar_weather_2017_2020_신안.csv', encoding='cp949', index_col=0)
 
-    dataset_transform_0 =data_scale(dataset_0, args.norm)
-    dataset_transform_1 =data_scale(dataset_1, args.norm)
-    dataset_transform_2 =data_scale(dataset_2, args.norm)
-    dataset_transform_3 =data_scale(dataset_3, args.norm)
-    dataset_transform_4 =data_scale(dataset_4, args.norm)
-    dataset_transform_5 =data_scale(dataset_5, args.norm)
-    dataset_transform_6 =data_scale(dataset_6, args.norm)
+    dataset = pd.concat([dataset_0, dataset_1, dataset_2, dataset_3, dataset_4, dataset_5, dataset_6], axis=0)
+
+    dataset = data_scale(dataset, args.norm)    #한번에 정규화
+    
+    
+    # dataset_transform_0 =data_scale(dataset_0, args.norm)
+    # dataset_transform_1 =data_scale(dataset_1, args.norm)
+    # dataset_transform_2 =data_scale(dataset_2, args.norm)
+    # dataset_transform_3 =data_scale(dataset_3, args.norm)
+    # dataset_transform_4 =data_scale(dataset_4, args.norm)
+    # dataset_transform_5 =data_scale(dataset_5, args.norm)
+    # dataset_transform_6 =data_scale(dataset_6, args.norm)
+    
+    dataset_transform_0 = dataset.iloc[0*35064:1*35064]
+    dataset_transform_1 = dataset.iloc[1*35064:2*35064]
+    dataset_transform_2 = dataset.iloc[2*35064:3*35064]
+    dataset_transform_3 = dataset.iloc[3*35064:4*35064]
+    dataset_transform_4 = dataset.iloc[4*35064:5*35064]
+    dataset_transform_5 = dataset.iloc[5*35064:6*35064]
+    dataset_transform_6 = dataset.iloc[6*35064:7*35064]
+    
     dataset_transform = [dataset_transform_0, dataset_transform_1, dataset_transform_2, dataset_transform_3, dataset_transform_4, dataset_transform_5, dataset_transform_6] 
     
-    #! 상관계수 계산하기 위한 주간 데이터
+    #! 상관계수 계산하기 위해 낮1시 데이터만 취합
     dataset_sunny_0 = dataset_transform_0.iloc[12::24].copy()
     dataset_sunny_1 = dataset_transform_1.iloc[12::24].copy()
     dataset_sunny_2 = dataset_transform_2.iloc[12::24].copy()
@@ -194,7 +247,7 @@ def main():
     
     solar_to_feature_corr = pd.concat([dataset_corr_0, dataset_corr_1, dataset_corr_2, dataset_corr_3, dataset_corr_4, dataset_corr_5, dataset_corr_6], axis=1)
     solar_to_feature_corr.columns = loc_list
-    solar_to_feature_corr.to_csv('./dataset/corr/solar_to_feature_corr.csv', encoding='cp949')      #*지역별 발전률-변수 corr
+    solar_to_feature_corr.to_csv(f'{result_dir}/solar_to_feature_corr.csv', encoding='cp949')      #*지역별 발전률-변수 corr
     # print(solar_to_feature_corr.shape)
     
         
@@ -205,13 +258,14 @@ def main():
     if len(glob.glob('./models/*.pt')) == 7:
         # model_loaded = torch.load('./test_model.pt').to(device)
         # loc_list = ['경상대', '남제주소내', '부산복합자재창고', '영월본부', '인천수산정수장', '하동보건소', '신안']
-        model_0 = torch.load('./models/model_0.pt').to(device)     #경상대
-        model_1 = torch.load('./models/model_1.pt').to(device)     #남제주소내
-        model_2 = torch.load('./models/model_2.pt').to(device)     #부산복합자재창고
-        model_3 = torch.load('./models/model_3.pt').to(device)     #영월본부
-        model_4 = torch.load('./models/model_4.pt').to(device)     #인천수산정수장
-        model_5 = torch.load('./models/model_5.pt').to(device)     #하동보건소
-        model_6 = torch.load('./models/model_6.pt').to(device)     #신안
+        
+        model_0 = torch.load(glob.glob('./models/*model_0.pt')[0]).to(device)       #경상대
+        model_1 = torch.load(glob.glob('./models/*model_1.pt')[0]).to(device)       #남제주소내
+        model_2 = torch.load(glob.glob('./models/*model_2.pt')[0]).to(device)       #부산복합자재창고
+        model_3 = torch.load(glob.glob('./models/*model_3.pt')[0]).to(device)       #영월본부
+        model_4 = torch.load(glob.glob('./models/*model_4.pt')[0]).to(device)       #인천수산정수장
+        model_5 = torch.load(glob.glob('./models/*model_5.pt')[0]).to(device)       #하동보건소
+        model_6 = torch.load(glob.glob('./models/*model_6.pt')[0]).to(device)       #신안
         
     
     else:
@@ -247,13 +301,13 @@ def main():
         train_loss_graph_5.to_csv(f'{result_dir}/loss_graph_5.csv')
         train_loss_graph_6.to_csv(f'{result_dir}/loss_graph_6.csv')
         
-        torch.save(model_0, "./model_0.pt")
-        torch.save(model_1, "./model_1.pt")
-        torch.save(model_2, "./model_2.pt")
-        torch.save(model_3, "./model_3.pt")
-        torch.save(model_4, "./model_4.pt")
-        torch.save(model_5, "./model_5.pt")
-        torch.save(model_6, "./model_6.pt")
+        torch.save(model_0, f"./models/{start_time_str}_model_0.pt")
+        torch.save(model_1, f"./models/{start_time_str}_model_1.pt")
+        torch.save(model_2, f"./models/{start_time_str}_model_2.pt")
+        torch.save(model_3, f"./models/{start_time_str}_model_3.pt")
+        torch.save(model_4, f"./models/{start_time_str}_model_4.pt")
+        torch.save(model_5, f"./models/{start_time_str}_model_5.pt")
+        torch.save(model_6, f"./models/{start_time_str}_model_6.pt")
     
     # model_loaded = torch.load('./test_model.pt').to(device)
     
@@ -264,7 +318,7 @@ def main():
     model_list = [model_0, model_1, model_2, model_3, model_4, model_5, model_6]
     num_list = [num for num in range(len(model_list))]
     for target_num in num_list:     #target_num 예측 위치
-        print(target_num)
+        print(f"Target Area : {target_num}")
         num_list_copy = num_list[:]
         target_model = model_list[num_list_copy.pop(target_num)]
         # num_list_copy 는 나머지 6개 지역
@@ -276,25 +330,39 @@ def main():
         for feature in feature_list:
             feature_corr = pd.read_csv(f"./dataset/corr/feature_corr_2017_2020_{feature}.csv", encoding='cp949', index_col=0)
             local_feature_corr = pd.concat([local_feature_corr, feature_corr.iloc[num_list_copy, target_num]], axis=1)
-        print(solar_to_feature_corr.shape)
-        print(local_feature_corr.shape)
+        # print(solar_to_feature_corr.shape)
+        # print(local_feature_corr.shape)
         local_feature_corr.columns = feature_list
         local_feature_corr.to_csv(f"./dataset/corr/local_feature_corr_{target_num}.csv", encoding='cp949')
 
         local_solar_to_feature_corr = solar_to_feature_corr.iloc[:, num_list_copy].T.copy()    #* target 뺀 나머지
-        print(local_solar_to_feature_corr.shape)
-        
+        # print(local_solar_to_feature_corr.shape)
         local_weight = pd.DataFrame(np.zeros((1,6)))
         for loc_num in local_weight.columns:
-            # print(loc_num)
-            # print(local_solar_to_feature_corr.iloc[loc_num].to_numpy())
-            # print(local_feature_corr.iloc[loc_num].to_numpy())
-            # print(np.matmul(local_solar_to_feature_corr.iloc[loc_num].to_numpy(), local_feature_corr.iloc[loc_num].to_numpy()))
             local_weight[loc_num] = np.matmul(abs(local_solar_to_feature_corr.iloc[loc_num].to_numpy()), abs(local_feature_corr.iloc[loc_num].to_numpy()))
         
         local_weight = local_weight.div(local_weight.sum(axis=1), axis=0)   #* 계산된 비율
+        local_weight.to_csv(f"{result_dir}/local_weight_{target_num}.csv")
+        print(local_weight)
+        target_data = dataset_transform[target_num]#.iloc[:, 1:]      #* 
+        # print(target_data)
         
-        dataset_transform[target_num]
+        test_result_df_0, test_loss_0 = test(target_data, train_model_0, args)
+        test_result_df_1, test_loss_1 = test(target_data, train_model_1, args)
+        test_result_df_2, test_loss_2 = test(target_data, train_model_2, args)
+        test_result_df_3, test_loss_3 = test(target_data, train_model_3, args)
+        test_result_df_4, test_loss_4 = test(target_data, train_model_4, args)
+        test_result_df_5, test_loss_5 = test(target_data, train_model_5, args)
+        
+        pred_result = pd.concat([test_result_df_0.iloc[:,0], test_result_df_1.iloc[:,0], test_result_df_2.iloc[:,0], test_result_df_3.iloc[:,0], test_result_df_4.iloc[:,0], test_result_df_5], axis=1)
+        pred_result['final_prediction'] = np.matmul(pred_result.iloc[:,:6], local_weight.T)
+        print(pred_result)
+        pred_result.to_csv(f"{result_dir}/pred_result_{target_num}.csv")
+        
+    
+    end_time = arrow.now()
+    
+    print(f"Total elapsed time : {end_time - start_time}")
         
         
     
