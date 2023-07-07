@@ -213,22 +213,41 @@ def main():
     dataset_transform = [dataset_transform_0, dataset_transform_1, dataset_transform_2, dataset_transform_3, dataset_transform_4, dataset_transform_5, dataset_transform_6] 
     
     #! 상관계수 계산하기 위해 낮1시 데이터만 취합
-    dataset_sunny_0 = dataset_transform_0.iloc[12::24].copy()
-    dataset_sunny_1 = dataset_transform_1.iloc[12::24].copy()
-    dataset_sunny_2 = dataset_transform_2.iloc[12::24].copy()
-    dataset_sunny_3 = dataset_transform_3.iloc[12::24].copy()
-    dataset_sunny_4 = dataset_transform_4.iloc[12::24].copy()
-    dataset_sunny_5 = dataset_transform_5.iloc[12::24].copy()
-    dataset_sunny_6 = dataset_transform_6.iloc[12::24].copy()
+    #* 13시 한시간만
+    # dataset_sunny_0 = dataset_transform_0.iloc[12::24].copy()
+    # dataset_sunny_1 = dataset_transform_1.iloc[12::24].copy()
+    # dataset_sunny_2 = dataset_transform_2.iloc[12::24].copy()
+    # dataset_sunny_3 = dataset_transform_3.iloc[12::24].copy()
+    # dataset_sunny_4 = dataset_transform_4.iloc[12::24].copy()
+    # dataset_sunny_5 = dataset_transform_5.iloc[12::24].copy()
+    # dataset_sunny_6 = dataset_transform_6.iloc[12::24].copy()
+    
+    #* 시간 전체
+    dataset_sunny_0 = dataset_transform_0.copy()
+    dataset_sunny_1 = dataset_transform_1.copy()
+    dataset_sunny_2 = dataset_transform_2.copy()
+    dataset_sunny_3 = dataset_transform_3.copy()
+    dataset_sunny_4 = dataset_transform_4.copy()
+    dataset_sunny_5 = dataset_transform_5.copy()
+    dataset_sunny_6 = dataset_transform_6.copy()
+    
+    #* 낮시간만(7~19)
+    # dataset_sunny_0 = pd.concat([dataset_0.iloc[6::24],dataset_0.iloc[7::24],dataset_0.iloc[8::24],dataset_0.iloc[9::24],dataset_0.iloc[10::24],dataset_0.iloc[11::24],dataset_0.iloc[12::24],dataset_0.iloc[13::24],dataset_0.iloc[14::24],dataset_0.iloc[15::24],dataset_0.iloc[16::24],dataset_0.iloc[17::24],dataset_0.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_1 = pd.concat([dataset_1.iloc[6::24],dataset_1.iloc[7::24],dataset_1.iloc[8::24],dataset_1.iloc[9::24],dataset_1.iloc[11::24],dataset_1.iloc[11::24],dataset_1.iloc[12::24],dataset_1.iloc[13::24],dataset_1.iloc[14::24],dataset_1.iloc[15::24],dataset_1.iloc[16::24],dataset_1.iloc[17::24],dataset_1.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_2 = pd.concat([dataset_2.iloc[6::24],dataset_2.iloc[7::24],dataset_2.iloc[8::24],dataset_2.iloc[9::24],dataset_2.iloc[12::24],dataset_2.iloc[11::24],dataset_2.iloc[12::24],dataset_2.iloc[13::24],dataset_2.iloc[14::24],dataset_2.iloc[15::24],dataset_2.iloc[16::24],dataset_2.iloc[17::24],dataset_2.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_3 = pd.concat([dataset_3.iloc[6::24],dataset_3.iloc[7::24],dataset_3.iloc[8::24],dataset_3.iloc[9::24],dataset_3.iloc[13::24],dataset_3.iloc[11::24],dataset_3.iloc[12::24],dataset_3.iloc[13::24],dataset_3.iloc[14::24],dataset_3.iloc[15::24],dataset_3.iloc[16::24],dataset_3.iloc[17::24],dataset_3.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_4 = pd.concat([dataset_4.iloc[6::24],dataset_4.iloc[7::24],dataset_4.iloc[8::24],dataset_4.iloc[9::24],dataset_4.iloc[14::24],dataset_4.iloc[11::24],dataset_4.iloc[12::24],dataset_4.iloc[13::24],dataset_4.iloc[14::24],dataset_4.iloc[15::24],dataset_4.iloc[16::24],dataset_4.iloc[17::24],dataset_4.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_5 = pd.concat([dataset_5.iloc[6::24],dataset_5.iloc[7::24],dataset_5.iloc[8::24],dataset_5.iloc[9::24],dataset_5.iloc[15::24],dataset_5.iloc[11::24],dataset_5.iloc[12::24],dataset_5.iloc[13::24],dataset_5.iloc[14::24],dataset_5.iloc[15::24],dataset_5.iloc[16::24],dataset_5.iloc[17::24],dataset_5.iloc[18::24]]).sort_index().copy()
+    # dataset_sunny_6 = pd.concat([dataset_6.iloc[6::24],dataset_6.iloc[7::24],dataset_6.iloc[8::24],dataset_6.iloc[9::24],dataset_6.iloc[16::24],dataset_6.iloc[11::24],dataset_6.iloc[12::24],dataset_6.iloc[13::24],dataset_6.iloc[14::24],dataset_6.iloc[15::24],dataset_6.iloc[16::24],dataset_6.iloc[17::24],dataset_6.iloc[18::24]]).sort_index().copy()
     
     #!이상치 제거
-    dataset_sunny_0 = detect_outliers(dataset_sunny_0, 1, dataset_sunny_0.columns)
-    dataset_sunny_1 = detect_outliers(dataset_sunny_1, 1, dataset_sunny_1.columns)
-    dataset_sunny_2 = detect_outliers(dataset_sunny_2, 1, dataset_sunny_2.columns)
-    dataset_sunny_3 = detect_outliers(dataset_sunny_3, 1, dataset_sunny_3.columns)
-    dataset_sunny_4 = detect_outliers(dataset_sunny_4, 1, dataset_sunny_4.columns)
-    dataset_sunny_5 = detect_outliers(dataset_sunny_5, 1, dataset_sunny_5.columns)
-    dataset_sunny_6 = detect_outliers(dataset_sunny_6, 1, dataset_sunny_6.columns)
+    # dataset_sunny_0 = detect_outliers(dataset_sunny_0, 1, dataset_sunny_0.columns)
+    # dataset_sunny_1 = detect_outliers(dataset_sunny_1, 1, dataset_sunny_1.columns)
+    # dataset_sunny_2 = detect_outliers(dataset_sunny_2, 1, dataset_sunny_2.columns)
+    # dataset_sunny_3 = detect_outliers(dataset_sunny_3, 1, dataset_sunny_3.columns)
+    # dataset_sunny_4 = detect_outliers(dataset_sunny_4, 1, dataset_sunny_4.columns)
+    # dataset_sunny_5 = detect_outliers(dataset_sunny_5, 1, dataset_sunny_5.columns)
+    # dataset_sunny_6 = detect_outliers(dataset_sunny_6, 1, dataset_sunny_6.columns)
     
     dataset_corr_0 = dataset_sunny_0.corr().loc['발전률'][1:]
     dataset_corr_1 = dataset_sunny_1.corr().loc['발전률'][1:]
@@ -242,7 +261,6 @@ def main():
     # print(dataset_corr_2)
     # print(dataset_corr_3)
     # print(dataset_corr_4)
-    # print(dataset_corr_5)
     # print(dataset_corr_6)
     
     solar_to_feature_corr = pd.concat([dataset_corr_0, dataset_corr_1, dataset_corr_2, dataset_corr_3, dataset_corr_4, dataset_corr_5, dataset_corr_6], axis=1)
@@ -272,7 +290,7 @@ def main():
         model_0, result_df_0, train_loss_graph_0 = local_model(dataset_transform_0, args)
         model_1, result_df_1, train_loss_graph_1 = local_model(dataset_transform_1, args)
         model_2, result_df_2, train_loss_graph_2 = local_model(dataset_transform_2, args)
-        model_3, result_df_3, train_loss_graph_3 = local_model(dataset_transform_3, args)
+        model_3, result_df_3, train_loss_graph_3 = local_model(dataset_transform_3, args) 
         model_4, result_df_4, train_loss_graph_4 = local_model(dataset_transform_4, args)
         model_5, result_df_5, train_loss_graph_5 = local_model(dataset_transform_5, args)
         model_6, result_df_6, train_loss_graph_6 = local_model(dataset_transform_6, args)
@@ -301,7 +319,7 @@ def main():
         train_loss_graph_5.to_csv(f'{result_dir}/loss_graph_5.csv')
         train_loss_graph_6.to_csv(f'{result_dir}/loss_graph_6.csv')
         
-        torch.save(model_0, f"./models/{start_time_str}_model_0.pt")
+        torch.save(model_0, f"./models/{start_time_str}_model_0.pt") 
         torch.save(model_1, f"./models/{start_time_str}_model_1.pt")
         torch.save(model_2, f"./models/{start_time_str}_model_2.pt")
         torch.save(model_3, f"./models/{start_time_str}_model_3.pt")
